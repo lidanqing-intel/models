@@ -118,8 +118,17 @@ void copy_vector_of_vector(const std::vector<std::vector<T>>& src_v_v,
   }
 }
 
+// bool ReadNextBatch(PaddleTensor& src_word_tensor,
+// PaddleTensor& src_pos_tensor,
+// PaddleTensor& src_slf_attn_bias_tensor,
+// PaddleTensor& trg_word_tensor,
+// PaddleTensor& init_score_tensor,
+// PaddleTensor& init_idx_tensor,
+// PaddleTensor& trg_src_attn_bias_tensor,
+// std::unique_ptr<DataReader>& reader) {
 bool ReadNextBatch(PaddleTensor& trg_word_tensor,
                    PaddleTensor& src_word_tensor,
+                   PaddleTensor& init_idx_tensor,
                    PaddleTensor& src_slf_attn_bias_tensor,
                    PaddleTensor& src_pos_tensor,
                    PaddleTensor& trg_src_attn_bias_tensor,
@@ -143,6 +152,7 @@ bool ReadNextBatch(PaddleTensor& trg_word_tensor,
   src_slf_attn_bias_tensor.name = "src_slf_attn_bias";
   trg_word_tensor.name = "trg_word";
   init_score_tensor.name = "init_score";
+  init_idx_tensor.name = "init_idx";
   trg_src_attn_bias_tensor.name = "trg_src_attn_bias";
 
   src_word_tensor.shape = {FLAGS_batch_size, max_length, 1};
@@ -185,6 +195,14 @@ bool ReadNextBatch(PaddleTensor& trg_word_tensor,
     *trg_word_array++ = reader->bos_idx;
   }
 
+  init_idx_tensor.shape = {FLAGS_batch_size};
+  init_idx_tensor.data.Resize(FLAGS_batch_size * sizeof(int64_t));
+  init_idx_tensor.lod.clear();
+  init_idx_tensor.dtype = PaddleDType::INT64;
+  int64_t* init_idx_array = static_cast<int64_t*>(init_idx_tensor.data.data());
+  for (int64_t i = 0; i < FLAGS_batch_size; *init_idx_array++ = i++)
+    ;
+
   init_score_tensor.shape = {FLAGS_batch_size, 1};
   init_score_tensor.data.Resize(FLAGS_batch_size * 1 * sizeof(float));
   init_score_tensor.dtype = PaddleDType::FLOAT32;
@@ -193,6 +211,7 @@ bool ReadNextBatch(PaddleTensor& trg_word_tensor,
     *init_score_array++ = 0;
   }
   init_score_tensor.lod = {tmplod, tmplod};
+
   int64_t* src_word_array = static_cast<int64_t*>(src_word_tensor.data.data());
   int64_t* src_pos_array = static_cast<int64_t*>(src_pos_tensor.data.data());
 
@@ -254,7 +273,8 @@ void PrintInfo() {
 void PrepareConfig(AnalysisConfig& config) {
   config.SetModel(FLAGS_infer_model);
   config.DisableGpu();
-  config.SwitchIrOptim(!FLAGS_skip_passes);
+  // config.SwitchIrOptim(!FLAGS_skip_passes);
+  config.SwitchIrOptim(false);
   config.SwitchSpecifyInputNames(false);
   config.SetCpuMathLibraryNumThreads(FLAGS_paddle_num_threads);
   if (FLAGS_use_mkldnn) config.EnableMKLDNN();
@@ -340,9 +360,15 @@ void Main() {
 
   InitializeReader(reader);
 
-  std::vector<PaddleTensor> input(6);
-  bool read_full_batch = ReadNextBatch(
-      input[0], input[1], input[2], input[3], input[4], input[5], reader);
+  std::vector<PaddleTensor> input(7);
+  bool read_full_batch = ReadNextBatch(input[0],
+                                       input[1],
+                                       input[2],
+                                       input[3],
+                                       input[4],
+                                       input[5],
+                                       input[6],
+                                       reader);
   if (read_full_batch == false)
     throw std::runtime_error("File contains less than one batch of data!\n");
 
@@ -350,8 +376,9 @@ void Main() {
   AnalysisConfig config;
   PrepareConfig(config);
 
-  auto predictor = CreatePaddlePredictor<AnalysisConfig,
-                                         PaddleEngineKind::kAnalysis>(config);
+  auto predictor =
+      CreatePaddlePredictor<AnalysisConfig, PaddleEngineKind::kAnalysis>(
+          config);
 
   if (FLAGS_profile) {
     auto pf_state = paddle::platform::ProfilerState::kCPU;
@@ -379,6 +406,7 @@ void Main() {
                          input[3],
                          input[4],
                          input[5],
+                         input[6],
                          reader)) {
         std::cout << "\n Less than one batch of data. Stopping." << std::endl;
         break;
@@ -399,7 +427,7 @@ void Main() {
   }
 
   double total_samples = FLAGS_iterations * FLAGS_batch_size;
-  double total_time =  timer_total.toc() / 1000;
+  double total_time = timer_total.toc() / 1000;
   stats.Postprocess(total_time, total_samples);
 
   // disable profiler

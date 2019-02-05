@@ -10,7 +10,6 @@ import time
 
 import numpy as np
 import paddle.fluid as fluid
-from paddle.fluid.transpiler.details import program_to_code
 
 import reader
 from config import *
@@ -258,7 +257,12 @@ def prepare_batch_input(insts, data_input_names, src_pad_idx, trg_pad_idx,
     return data_input_dict, np.asarray([num_token], dtype="float32")
 
 
-def prepare_data_generator(args, is_test, count, pyreader):
+def prepare_data_generator(args,
+                           is_test,
+                           count,
+                           pyreader,
+                           py_reader_provider_wrapper,
+                           place=None):
     """
     Data generator wrapper for DataReader. If use py_reader, set the data
     provider for py_reader
@@ -319,7 +323,7 @@ def prepare_data_generator(args, is_test, count, pyreader):
         data_reader = split(data_reader, count)
     if args.use_py_reader:
         pyreader.decorate_tensor_provider(
-            py_reader_provider_wrapper(data_reader))
+            py_reader_provider_wrapper(data_reader, place))
         data_reader = None
     else:  # Data generator for multi-devices
         data_reader = stack(data_reader, count)
@@ -357,7 +361,7 @@ def prepare_feed_dict_list(data_generator, init_flag, count):
     return feed_dict_list if len(feed_dict_list) == count else None
 
 
-def py_reader_provider_wrapper(data_reader):
+def py_reader_provider_wrapper(data_reader, place):
     """
     Data provider needed by fluid.layers.py_reader.
     """
@@ -370,8 +374,7 @@ def py_reader_provider_wrapper(data_reader):
                 data, data_input_names, ModelHyperParams.eos_idx,
                 ModelHyperParams.eos_idx, ModelHyperParams.n_head,
                 ModelHyperParams.d_model)
-            total_dict = dict(data_input_dict.items())
-            yield [total_dict[item] for item in data_input_names]
+            yield [data_input_dict[item] for item in data_input_names]
 
     return py_reader_provider
 
@@ -406,12 +409,25 @@ def test_context(exe, train_exe, dev_count):
                 is_test=True)
     test_prog = test_prog.clone(for_test=True)
     test_data = prepare_data_generator(
-        args, is_test=True, count=dev_count, pyreader=pyreader)
+        args,
+        is_test=True,
+        count=dev_count,
+        pyreader=pyreader,
+        py_reader_provider_wrapper=py_reader_provider_wrapper)
 
-    exe.run(startup_prog)
+    exe.run(startup_prog)  # to init pyreader for testing
+    if TrainTaskConfig.ckpt_path:
+        fluid.io.load_persistables(
+            exe, TrainTaskConfig.ckpt_path, main_program=test_prog)
+
+    exec_strategy = fluid.ExecutionStrategy()
+    exec_strategy.use_experimental_executor = True
+    build_strategy = fluid.BuildStrategy()
     test_exe = fluid.ParallelExecutor(
         use_cuda=TrainTaskConfig.use_gpu,
         main_program=test_prog,
+        build_strategy=build_strategy,
+        exec_strategy=exec_strategy,
         share_vars_from=train_exe)
 
     def test(exe=test_exe, pyreader=pyreader):
@@ -457,19 +473,27 @@ def train_loop(exe,
                nccl2_trainer_id=0):
     # Initialize the parameters.
     if TrainTaskConfig.ckpt_path:
-        fluid.io.load_persistables(exe, TrainTaskConfig.ckpt_path)
+        exe.run(startup_prog)  # to init pyreader for training
+        logging.info("load checkpoint from {}".format(
+            TrainTaskConfig.ckpt_path))
+        fluid.io.load_persistables(
+            exe, TrainTaskConfig.ckpt_path, main_program=train_prog)
     else:
         logging.info("init fluid.framework.default_startup_program")
         exe.run(startup_prog)
 
     logging.info("begin reader")
     train_data = prepare_data_generator(
-        args, is_test=False, count=dev_count, pyreader=pyreader)
+        args,
+        is_test=False,
+        count=dev_count,
+        pyreader=pyreader,
+        py_reader_provider_wrapper=py_reader_provider_wrapper)
 
     # For faster executor
     exec_strategy = fluid.ExecutionStrategy()
     exec_strategy.use_experimental_executor = True
-    # exec_strategy.num_iteration_per_drop_scope = 5
+    exec_strategy.num_iteration_per_drop_scope = int(args.fetch_steps)
     build_strategy = fluid.BuildStrategy()
     # Since the token number differs among devices, customize gradient scale to
     # use token average cost among multi-devices. and the gradient scale is
@@ -741,6 +765,7 @@ if __name__ == "__main__":
     LOG_FORMAT = "[%(asctime)s %(levelname)s %(filename)s:%(lineno)d] %(message)s"
     logging.basicConfig(
         stream=sys.stdout, level=logging.DEBUG, format=LOG_FORMAT)
+    logging.getLogger().setLevel(logging.INFO)
 
     args = parse_args()
     train(args)
