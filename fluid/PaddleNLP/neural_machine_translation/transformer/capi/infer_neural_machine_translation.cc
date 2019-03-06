@@ -196,11 +196,11 @@ bool ReadNextBatch(PaddleTensor& trg_word_tensor,
   }
 
   init_idx_tensor.shape = {FLAGS_batch_size};
-  init_idx_tensor.data.Resize(FLAGS_batch_size * sizeof(int64_t));
+  init_idx_tensor.data.Resize(FLAGS_batch_size * sizeof(int32_t));
   init_idx_tensor.lod.clear();
-  init_idx_tensor.dtype = PaddleDType::INT64;
-  int64_t* init_idx_array = static_cast<int64_t*>(init_idx_tensor.data.data());
-  for (int64_t i = 0; i < FLAGS_batch_size; *init_idx_array++ = i++)
+  init_idx_tensor.dtype = PaddleDType::INT32;
+  int32_t* init_idx_array = static_cast<int32_t*>(init_idx_tensor.data.data());
+  for (int32_t i = 0; i < FLAGS_batch_size; *init_idx_array++ = i++)
     ;
 
   init_score_tensor.shape = {FLAGS_batch_size, 1};

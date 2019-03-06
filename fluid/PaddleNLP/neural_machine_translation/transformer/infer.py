@@ -146,8 +146,7 @@ def prepare_batch_input(insts, data_input_names, src_pad_idx, bos_idx, n_head,
         np.zeros_like(trg_word, dtype="float32").reshape(-1, 1), place,
         [range(trg_word.shape[0] + 1)] * 2)
     trg_word = to_lodtensor(trg_word, place, [range(trg_word.shape[0] + 1)] * 2)
-    #  init_idx = np.asarray(range(len(insts)), dtype="int32")
-    init_idx = np.asarray(range(len(insts)), dtype="int64")
+    init_idx = np.asarray(range(len(insts)), dtype="int32")
 
     data_input_dict = dict(
         zip(data_input_names, [
