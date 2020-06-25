@@ -90,7 +90,6 @@ def do_eval(args):
     test_process(
         exe=exe, program=test_program, reader=pyreader, test_ret=test_ret)
 
-
 def test_process(exe, program, reader, test_ret):
     """
     the function to execute the infer process

@@ -42,8 +42,8 @@ def save_inference_model(args):
         infer_ret['crf_decode'],
         exe,
         main_program=infer_program,
-        model_filename='model.pdmodel',
-        params_filename='params.pdparams', )
+        model_filename=None,
+        params_filename=None)
 
 
 def test_inference_model(model_dir, text_list, dataset):
@@ -107,8 +107,8 @@ if __name__ == "__main__":
     print("save inference model")
     save_inference_model(args)
 
-    print("inference model save in %s" % args.inference_save_dir)
-    print("test inference model")
-    dataset = reader.Dataset(args)
-    test_data = [u'百度是一家高科技公司', u'中山大学是岭南第一学府']
-    test_inference_model(args.inference_save_dir, test_data, dataset)
+   # print("inference model save in %s" % args.inference_save_dir)
+   # print("test inference model")
+   # dataset = reader.Dataset(args)
+   # test_data = [u'百度是一家高科技公司', u'中山大学是岭南第一学府']
+   # test_inference_model(args.inference_save_dir, test_data, dataset)

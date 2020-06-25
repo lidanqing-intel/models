@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 export FLAGS_fraction_of_gpu_memory_to_use=0.02
 export FLAGS_eager_delete_tensor_gb=0.0
 export FLAGS_fast_eager_deletion_mode=1
@@ -60,7 +60,7 @@ function run_eval() {
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
         --use_cuda False \
-        --init_checkpoint ./model_baseline \
+        --init_checkpoint ./GRU_infer_model \
         --test_data ./data/test.tsv \
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
@@ -95,7 +95,7 @@ function run_inference() {
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic \
-        --inference_save_dir ./infer_model
+        --inference_save_dir ./GRU_infer_model
 }
 
 
