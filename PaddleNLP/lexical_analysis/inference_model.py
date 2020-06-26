@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 import paddle.fluid as fluid
-
+from paddle.fluid import profiler
 import creator
 import reader
 import utils

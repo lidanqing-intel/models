@@ -20,7 +20,7 @@ import sys
 
 import paddle.fluid as fluid
 import paddle
-
+from paddle.fluid import profiler
 import utils
 import reader
 import creator
@@ -51,7 +51,7 @@ data_g.add_arg("test_data", str, "./data/test.tsv",
                "The folder where the training data is located.")
 data_g.add_arg("init_checkpoint", str, "./model_baseline", "Path to init model")
 data_g.add_arg(
-    "batch_size", int, 200,
+    "batch_size", int, 1,
     "The number of sequences contained in a mini-batch, "
     "or the maximum number of tokens (include paddings) contained in a mini-batch."
 )
@@ -81,7 +81,7 @@ def do_eval(args):
         model='lac',
         reader=dataset,
         mode='test')
-
+    profiler.start_profiler("All")
     exe = fluid.Executor(place)
     exe.run(fluid.default_startup_program())
 
@@ -89,6 +89,8 @@ def do_eval(args):
     utils.init_checkpoint(exe, args.init_checkpoint, test_program)
     test_process(
         exe=exe, program=test_program, reader=pyreader, test_ret=test_ret)
+
+    profiler.stop_profiler("total", "/tmp/gru_profile")
 
 def test_process(exe, program, reader, test_ret):
     """
