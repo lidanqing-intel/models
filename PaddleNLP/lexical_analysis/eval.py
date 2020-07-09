@@ -55,7 +55,8 @@ data_g.add_arg(
     "The number of sequences contained in a mini-batch, "
     "or the maximum number of tokens (include paddings) contained in a mini-batch."
 )
-
+model_g.add_arg("eval_save_dir", str, "./GRU_eval_model",
+                "The number of hidden nodes in the GRNN layer.")
 
 def do_eval(args):
     dataset = reader.Dataset(args)
@@ -87,6 +88,7 @@ def do_eval(args):
 
     # load model
     utils.init_checkpoint(exe, args.init_checkpoint, test_program)
+
     test_process(
         exe=exe, program=test_program, reader=pyreader, test_ret=test_ret)
 
@@ -101,6 +103,15 @@ def test_process(exe, program, reader, test_ret):
     :return: the list of prediction result
     """
     test_ret["chunk_evaluator"].reset()
+
+    fluid.io.save_inference_model(
+        args.eval_save_dir,
+        ['words','targets'],
+        [ test_ret["num_infer_chunks"], test_ret["num_label_chunks"], test_ret["num_correct_chunks"] ],
+        exe,
+        main_program=program,
+        model_filename=None,
+        params_filename=None)
 
     lods = []
     words = []

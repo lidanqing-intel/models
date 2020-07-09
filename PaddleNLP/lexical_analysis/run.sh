@@ -60,7 +60,7 @@ function run_eval() {
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
         --use_cuda False \
-        --init_checkpoint ./GRU_infer_model \
+        --init_checkpoint ./GRU_eval_model \
         --test_data ./data/test.tsv \
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
