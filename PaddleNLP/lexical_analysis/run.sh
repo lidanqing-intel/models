@@ -55,7 +55,7 @@ function run_eval() {
     echo "evaluating"
     echo "this may cost about 5 minutes if run on you CPU machine"
     python eval.py \
-        --batch_size 2 \
+        --batch_size 1 \
         --word_emb_dim 128 \
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
@@ -66,7 +66,6 @@ function run_eval() {
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic
 }
-
 
 function run_infer() {
     echo "infering"
@@ -95,7 +94,7 @@ function run_inference() {
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic \
-        --inference_save_dir ./GRU_infer_model
+        --inference_save_dir ./GRU_eval_float
 }
 
 

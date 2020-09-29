@@ -38,7 +38,7 @@ def save_inference_model(args):
 
     fluid.io.save_inference_model(
         args.inference_save_dir,
-        ['words'],
+        ['words','targets'],
         infer_ret['crf_decode'],
         exe,
         main_program=infer_program,

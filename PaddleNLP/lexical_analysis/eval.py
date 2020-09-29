@@ -55,8 +55,9 @@ data_g.add_arg(
     "The number of sequences contained in a mini-batch, "
     "or the maximum number of tokens (include paddings) contained in a mini-batch."
 )
-model_g.add_arg("eval_save_dir", str, "./GRU_eval_model",
+model_g.add_arg("eval_save_dir", str, "./GRU_eval_model_v2",
                 "The number of hidden nodes in the GRNN layer.")
+
 
 def do_eval(args):
     dataset = reader.Dataset(args)
@@ -112,7 +113,7 @@ def test_process(exe, program, reader, test_ret):
         main_program=program,
         model_filename=None,
         params_filename=None)
-
+    x = fluid.framework._get_var('embedding_0.tmp_0', program)
     lods = []
     words = []
     targets = []
@@ -121,10 +122,11 @@ def test_process(exe, program, reader, test_ret):
     i = 0
     start_time = time.time()
     for data in reader():
-        print(len(data[0]['words'].lod()[0]))
-        print(data[0]['words'])
-        exit(0)
+        # print(len(data[0]['words'].lod()[0]))
+        # print(data[0]['words'])
+        # exit(0)
         new_lod = data[0]['words'].lod()[0][1]
+        # print("new lod is ", new_lod)
         new_words = np.array(data[0]['words'])
         new_targets = np.array(data[0]['targets'])
         assert new_lod == len(new_words)
@@ -142,19 +144,24 @@ def test_process(exe, program, reader, test_ret):
                 test_ret["num_correct_chunks"],
             ],
             feed=data, )
+        print("nums_infer %d, nums_label %d, nums_correct %d" % (nums_infer, nums_label, nums_correct))
+        tmp=exe.run(program, feed=data, fetch_list=[x])
+        print("WARNING!!!!! HERE IS THE LOOKUP TABLE OUTPUT VALUES")
+        print(tmp)
+        print("***************************************************")
         test_ret["chunk_evaluator"].update(nums_infer, nums_label, nums_correct)
     precision, recall, f1 = test_ret["chunk_evaluator"].eval()
     end_time = time.time()
     print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s" %
           (precision, recall, f1, end_time - start_time))
     
-    file1 = open("test_eval_0708.bin","w+b")
-    file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
-    file1.write(np.array(int(sum_words)).astype('int64').tobytes())
-    file1.write(np.array(lods).astype('uint64').tobytes())
-    file1.write(np.array(words).astype('int64').tobytes())
-    file1.write(np.array(targets).astype('int64').tobytes())
-    file1.close()
+    # file1 = open("test_small.bin","w+b")
+    # file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
+    # file1.write(np.array(int(sum_words)).astype('int64').tobytes())
+    # file1.write(np.array(lods).astype('uint64').tobytes())
+    # file1.write(np.array(words).astype('int64').tobytes())
+    # file1.write(np.array(targets).astype('int64').tobytes())
+    # file1.close()
 
 if __name__ == '__main__':
     args = parser.parse_args()
