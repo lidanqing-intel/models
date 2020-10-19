@@ -71,7 +71,7 @@ function run_eval() {
 function run_infer() {
     echo "infering"
     python predict.py \
-        --batch_size 200 \
+        --batch_size 1 \
         --word_emb_dim 128 \
         --grnn_hidden_dim 128 \
         --bigru_num 2 \

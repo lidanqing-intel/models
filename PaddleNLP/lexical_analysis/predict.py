@@ -133,7 +133,7 @@ def infer_process(exe, program, reader, fetch_vars, dataset):
         new_words = np.array(data[0]['words'])
         print(new_lod)
         print(new_words)
-        return
+        # return
         # new_targets = np.array(data[0]['targets'])
         assert new_lod == len(new_words)
         # assert new_lod == len(new_targets)
@@ -143,13 +143,13 @@ def infer_process(exe, program, reader, fetch_vars, dataset):
         sum_sentences = sum_sentences + 1
         sum_words = sum_words + new_lod
 
-        words, crf_decode = exe.run(
+        result_words, crf_decode = exe.run(
             program,
             fetch_list=fetch_vars,
             feed=data,
             return_numpy=False,
             use_program_cache=True, )
-        results += utils.parse_result(words, crf_decode, dataset)
+        results += utils.parse_result(result_words, crf_decode, dataset)
     
     file1 = open("test_eval_0708.bin","w+b")
     file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
