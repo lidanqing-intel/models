@@ -60,8 +60,8 @@ function run_eval() {
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
         --use_cuda False \
-        --init_checkpoint ./model_baseline \
-        --test_data ./data/test.tsv \
+        --init_checkpoint ./GRU_eval_model_v2 \
+        --test_data ./data/test_1w.tsv \
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic
@@ -76,8 +76,8 @@ function run_infer() {
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
         --use_cuda False \
-        --init_checkpoint ./model_baseline \
-        --infer_data ./data/infer.tsv \
+        --init_checkpoint ./GRU_eval_model_v2 \
+        --infer_data ./data/test_1w.tsv \
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic
