@@ -34,16 +34,17 @@ def save_inference_model(args):
     # load pretrain check point
     exe = fluid.Executor(place)
     exe.run(fluid.default_startup_program())
-    utils.init_checkpoint(exe, args.init_checkpoint, infer_program)
+#    utils.init_checkpoint(exe, args.init_checkpoint, infer_program)
 
     fluid.io.save_inference_model(
         args.inference_save_dir,
         ['words'],
-        infer_ret['crf_decode'],
+        [infer_ret['words'], infer_ret['crf_decode']],
         exe,
         main_program=infer_program,
-        model_filename='model.pdmodel',
-        params_filename='params.pdparams', )
+       # model_filename='model.pdmodel',
+       # params_filename='params.pdparams',
+        )
 
 
 def test_inference_model(model_dir, text_list, dataset):
@@ -109,8 +110,8 @@ if __name__ == "__main__":
     print("save inference model")
     save_inference_model(args)
 
-    print("inference model save in %s" % args.inference_save_dir)
-    print("test inference model")
-    dataset = reader.Dataset(args)
-    test_data = [u'百度是一家高科技公司', u'中山大学是岭南第一学府']
-    test_inference_model(args.inference_save_dir, test_data, dataset)
+  #  print("inference model save in %s" % args.inference_save_dir)
+  #  print("test inference model")
+  #  dataset = reader.Dataset(args)
+  #  test_data = [u'百度是一家高科技公司', u'中山大学是岭南第一学府']
+  #  test_inference_model(args.inference_save_dir, test_data, dataset)
