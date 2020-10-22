@@ -54,14 +54,14 @@ function run_train_multi_cpu() {
 function run_eval() {
     echo "evaluating"
     echo "this may cost about 5 minutes if run on you CPU machine"
-    python eval.py \
+    python3.6 eval.py \
         --batch_size 1 \
         --word_emb_dim 128 \
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
         --use_cuda False \
         --init_checkpoint ./GRU_eval_model \
-        --test_data ./data/test.tsv \
+        --test_data ./data/test_1w.tsv \
         --word_dict_path ./conf/word.dic \
         --label_dict_path ./conf/tag.dic \
         --word_rep_dict_path ./conf/q2b.dic

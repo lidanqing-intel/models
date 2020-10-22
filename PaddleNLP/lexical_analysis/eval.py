@@ -55,7 +55,7 @@ data_g.add_arg(
     "The number of sequences contained in a mini-batch, "
     "or the maximum number of tokens (include paddings) contained in a mini-batch."
 )
-model_g.add_arg("eval_save_dir", str, "./GRU_eval_model_v2",
+model_g.add_arg("eval_save_dir", str, "./GRU_eval_model_v3",
                 "The number of hidden nodes in the GRNN layer.")
 
 
@@ -122,8 +122,8 @@ def test_process(exe, program, reader, test_ret):
     i = 0
     start_time = time.time()
     for data in reader():
-        # print(len(data[0]['words'].lod()[0]))
-        # print(data[0]['words'])
+        print(len(data[0]['words'].lod()[0]))
+        print(data[0]['words'])
         # exit(0)
         new_lod = data[0]['words'].lod()[0][1]
         # print("new lod is ", new_lod)
@@ -155,13 +155,13 @@ def test_process(exe, program, reader, test_ret):
     print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s" %
           (precision, recall, f1, end_time - start_time))
     
-    # file1 = open("test_small.bin","w+b")
-    # file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
-    # file1.write(np.array(int(sum_words)).astype('int64').tobytes())
-    # file1.write(np.array(lods).astype('uint64').tobytes())
-    # file1.write(np.array(words).astype('int64').tobytes())
-    # file1.write(np.array(targets).astype('int64').tobytes())
-    # file1.close()
+    file1 = open("test_1022.bin","w+b")
+    file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
+    file1.write(np.array(int(sum_words)).astype('int64').tobytes())
+    file1.write(np.array(lods).astype('uint64').tobytes())
+    file1.write(np.array(words).astype('int64').tobytes())
+    file1.write(np.array(targets).astype('int64').tobytes())
+    file1.close()
 
 if __name__ == '__main__':
     args = parser.parse_args()
