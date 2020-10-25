@@ -21,6 +21,7 @@ import sys
 import paddle.fluid as fluid
 import paddle
 
+import numpy as np
 import utils
 import reader
 import creator
@@ -101,8 +102,27 @@ def test_process(exe, program, reader, test_ret):
     """
     test_ret["chunk_evaluator"].reset()
 
+    lods = []
+    words = []
+    targets = []
+    sum_words = 0
+    sum_sentences = 0
+    i = 0
+
     start_time = time.time()
     for data in reader():
+        print(len(data[0]['words'].lod()[0]))
+        print(data[0]['words'])
+        new_lod = data[0]['words'].lod()[0][1]
+        new_words = np.array(data[0]['words'])
+        new_targets = np.array(data[0]['targets'])
+        assert new_lod == len(new_words)
+        assert new_lod == len(new_targets)
+        lods.append(new_lod)
+        words.extend(new_words.flatten())
+        targets.extend(new_targets.flatten())
+        sum_sentences = sum_sentences + 1
+        sum_words = sum_words + new_lod
 
         nums_infer, nums_label, nums_correct = exe.run(
             program,
@@ -118,6 +138,14 @@ def test_process(exe, program, reader, test_ret):
     end_time = time.time()
     print("[test] P: %.5f, R: %.5f, F1: %.5f, elapsed time: %.3f s" %
           (precision, recall, f1, end_time - start_time))
+
+    file1 = open("test_eval_1w.bin", "w+b")
+    file1.write(np.array(int(sum_sentences)).astype('int64').tobytes())
+    file1.write(np.array(int(sum_words)).astype('int64').tobytes())
+    file1.write(np.array(lods).astype('uint64').tobytes())
+    file1.write(np.array(words).astype('int64').tobytes())
+    file1.write(np.array(targets).astype('int64').tobytes())
+    file1.close()
 
 
 if __name__ == '__main__':

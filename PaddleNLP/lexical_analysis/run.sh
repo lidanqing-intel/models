@@ -55,7 +55,7 @@ function run_eval() {
     echo "evaluating"
     echo "this may cost about 5 minutes if run on you CPU machine"
     python eval.py \
-        --batch_size 200 \
+        --batch_size 1 \
         --word_emb_dim 128 \
         --grnn_hidden_dim 128 \
         --bigru_num 2 \
